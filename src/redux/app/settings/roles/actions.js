@@ -42,8 +42,3 @@ export const setActiveRole = (activeRole) => ({
     type: SET_ACTIVE_ROLE,
     payload: activeRole,
 });
-
-export const setContacts = (contacts) => ({
-    type: SET_CONTACTS,
-    payload: contacts,
-});

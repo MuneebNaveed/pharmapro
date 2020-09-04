@@ -17,10 +17,28 @@ import { If, Then, Else } from 'react-if';
 import Loader from '../../../helpers/loader';
 import Logger from '../../../helpers/Logger';
 import { useDispatch, useSelector } from 'react-redux';
-import { setActiveRole } from '../../../redux/app/actions';
 import classnames from 'classnames';
+import * as actions from '../../../redux/actions';
 
 const logger = Logger.get('SideBar');
+
+const data = {
+    roles: [
+        {
+            _id: 'awou5ajdlhng',
+            value: 'Developer',
+            disabled: true,
+        },
+        {
+            _id: 'ou35ayhajkdng',
+            value: 'admin',
+        },
+        {
+            _id: 'alksjhlatuhjh',
+            value: 'cashier',
+        },
+    ],
+};
 
 const CreateRoleModal = ({ isOpen, toggle }) => (
     <Modal isOpen={isOpen} toggle={toggle}>
@@ -68,10 +86,11 @@ const RemoveRoleModal = ({ isOpen, toggle, hideRoles, resetSelectedRole }) => (
     </Modal>
 );
 
-const FetchedRoles = (props) => {
-    const { activeRole } = useSelector((state) => state.App.Settings.Roles);
+const FetchedRoles = () => {
+    const { roles } = useSelector((state) => state.app.settings.roles);
+    const { activeRole } = useSelector((state) => state.app.settings.roles);
     const dispatch = useDispatch();
-    return props.roles.map((role, index) => (
+    return roles.map((role, index) => (
         <Button
             name={role.value}
             key={`fetched-role-${role.value.toLowerCase()}-${index}`}
@@ -87,7 +106,7 @@ const FetchedRoles = (props) => {
                 }
 
                 setTimeout(() => {
-                    dispatch(setActiveRole(name.toLowerCase()));
+                    dispatch(actions.setActiveRole(name.toLowerCase()));
                     logger.debug(`setActiveRole() [activeRole:${name.toLowerCase()}]`);
                 }, 150);
             }}>
@@ -138,7 +157,8 @@ const Search = () => (
     </Row>
 );
 
-const RemoveRoles = (props) => {
+const RemoveRoles = () => {
+    const { roles } = useSelector((state) => state.app.settings.roles);
     const [isDeleteRoleModalOpen, setIsDeleteRoleModalOpen] = useState(false);
     const [showRoles, setShowRoles] = useState(false);
     const [selectedRole, setSelectedRole] = useState(null);
@@ -166,7 +186,7 @@ const RemoveRoles = (props) => {
                         <CardBody className="p-0">
                             <ul id="roles-list">
                                 <li id="pagination">...</li>
-                                {props.roles.map((role) => {
+                                {roles.map((role) => {
                                     if (role.value.toLowerCase() === 'developer') return null;
                                     return (
                                         <li
@@ -193,17 +213,41 @@ const RemoveRoles = (props) => {
     );
 };
 
-const SideBar = (props) => {
-    const cardStyles = props.roles.length < 1 ? { height: '160px' } : { height: 'auto' };
+const SideBar = () => {
+    const { roles, loadedRoutesPowers, activeRole } = useSelector((state) => state.app.settings.roles);
+    const dispatch = useDispatch();
+    const cardStyles = roles.length < 1 ? { height: '160px' } : { height: 'auto' };
     const [isCreateRoleModalOpen, setIsOpen] = useState(false);
 
     useEffect(() => logger.debug(`toggleModal() [open:${isCreateRoleModalOpen}]`), [isCreateRoleModalOpen]);
+
+    const loadRoles = () => {
+        if (roles && Boolean(loadedRoutesPowers[activeRole]) === false) {
+            logger.debug('removeAllRoutePowers()');
+            dispatch(actions.removeAllRoutePowers());
+        }
+
+        logger.debug('fetchRoles()');
+        logger.time('fetchRoles()');
+        setTimeout(() => {
+            dispatch(actions.setRoles(data.roles));
+            logger.timeEnd('fetchRoles()');
+        }, 1750);
+    };
+
+    const updateRoles = () => {
+        if (roles.length < 1) void loadRoles();
+    };
+
+    useEffect(() => {
+        if (activeRole) void updateRoles();
+    }, [activeRole]);
 
     return (
         <Col xl={4} lg={6} md={12}>
             <Card>
                 <CardBody style={cardStyles} className="p-4">
-                    <If condition={props.roles.length < 1}>
+                    <If condition={roles.length < 1}>
                         <Then>
                             <Loader loading={true} />
                         </Then>
@@ -214,10 +258,10 @@ const SideBar = (props) => {
                                 className="w-100 mb-2">
                                 Create New Role
                             </Button>
-                            <FetchedRoles roles={props.roles || []} />
+                            <FetchedRoles />
                             <RolesPagination />
                             <Search />
-                            <RemoveRoles roles={props.roles || []} />
+                            <RemoveRoles />
                             <CreateRoleModal
                                 isOpen={isCreateRoleModalOpen}
                                 toggle={() => setIsOpen((prevState) => !prevState)}

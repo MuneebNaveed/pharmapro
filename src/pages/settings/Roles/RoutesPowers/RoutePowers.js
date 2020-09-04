@@ -9,7 +9,7 @@ import { useSelector } from 'react-redux';
 const logger = Logger.get('RoutePowers');
 
 const RoutePowers = (props) => {
-    const { activeRole } = useSelector((state) => state.App.Settings.Roles);
+    const { activeRole } = useSelector((state) => state.app.settings.roles);
     const [isExpanded, setIsExpanded] = useState(false);
     const expandOnDefault = () => setIsExpanded(Boolean(props?.default));
     const updateCollapseOnRoleChange = () => {
